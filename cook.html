@@ -1,0 +1,516 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>African Dish Cooking Timer</title>
+    <style>
+        body {
+            font-family: sans-serif;
+            display: grid;
+            height: 100vh;
+            place-items: center;
+            text-align: center;
+            margin: 0;
+            background-color: #f0f8ff;
+            padding: 20px;
+        }
+
+        h1 {
+            color: #d64949;
+        }
+
+        select,
+        button {
+            padding: 10px;
+            margin: 10px;
+            font-size: 16px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        select {
+            width: 200px;
+        }
+
+        button {
+            background-color: #4CAF50;
+            color: white;
+        }
+
+        button:hover {
+            background-color: #45a049;
+        }
+
+        .steps,
+        #finish-screen {
+            display: none;
+            margin-top: 20px;
+        }
+
+        .step-content {
+            margin-top: 20px;
+        }
+
+        .temperature-info {
+            font-size: 20px;
+            margin-top: 10px;
+        }
+
+        .temperature-info img {
+            vertical-align: middle;
+            width: 24px;
+            height: 24px;
+        }
+
+        .emoji {
+            font-size: 24px;
+            margin-right: 10px;
+        }
+
+        .base-timer {
+            position: relative;
+            width: 250px;
+            height: 250px;
+            margin: 20px auto;
+        }
+
+        .base-timer__svg {
+            transform: scaleX(-1);
+        }
+
+        .base-timer__circle {
+            fill: none;
+            stroke: none;
+        }
+
+        .base-timer__path-elapsed {
+            stroke-width: 7px;
+            stroke: grey;
+        }
+
+        .base-timer__path-remaining {
+            stroke-width: 7px;
+            stroke-linecap: round;
+            transform: rotate(90deg);
+            transform-origin: center;
+            transition: 1s linear all;
+            fill-rule: nonzero;
+            stroke: currentColor;
+        }
+
+        .base-timer__path-remaining.green {
+            color: rgb(65, 184, 131);
+        }
+
+        .base-timer__path-remaining.orange {
+            color: orange;
+        }
+
+        .base-timer__path-remaining.red {
+            color: red;
+        }
+
+        .base-timer__label {
+            position: absolute;
+            width: 250px;
+            height: 250px;
+            top: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 36px;
+        }
+
+        .notification {
+            padding: 10px;
+            color: white;
+            background-color: #007bff;
+            margin-top: 10px;
+            display: none;
+            border-radius: 5px;
+        }
+
+        .meal-image {
+            width: 100px;
+            height: 100px;
+            margin: 20px auto;
+            border-radius: 10px;
+            object-fit: cover;
+        }
+
+        .celebration {
+            display: none;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .celebration img {
+            width: 150px;
+            height: 150px;
+            margin-bottom: 20px;
+        }
+
+        .celebration button {
+            background-color: #ff9800;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 600px) {
+            .base-timer {
+                width: 200px;
+                height: 200px;
+            }
+
+            .base-timer__label {
+                font-size: 28px;
+            }
+
+            select,
+            button {
+                padding: 8px;
+                margin: 8px;
+                font-size: 14px;
+            }
+
+            .temperature-info {
+                font-size: 16px;
+            }
+
+            .meal-image {
+                width: 80px;
+                height: 80px;
+            }
+
+            .celebration img {
+                width: 120px;
+                height: 120px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <h1>African Dish Cooking Timer 🍳</h1>
+
+    <!-- Meal Selection -->
+    <div id="meal-select">
+        <label for="dish-select">Choose your meal:</label><br>
+        <select id="dish-select">
+            <option value="Ugali">🍚 Ugali</option>
+            <option value="Jollof Rice">🍛 Jollof Rice</option>
+            <option value="Injera">🍞 Injera</option>
+            <option value="Fufu">🍲 Fufu</option>
+            <option value="Sadza">🥣 Sadza</option>
+        </select>
+        <br>
+        <button id="choose-meal-button">Next</button>
+    </div>
+
+    <!-- Cooking Steps -->
+    <div class="steps" id="cooking-steps">
+        <h2 id="meal-title"></h2>
+        <img id="meal-image" class="meal-image" src="" alt="Meal Image">
+        <div id="step-details" class="step-content">
+            <p id="step-instruction"><span class="emoji">🔪</span>Instruction for cooking will appear here.</p>
+            <div class="temperature-info">
+                <img src="https://img.icons8.com/color/48/000000/temperature.png" alt="Temperature Icon">
+                <span id="temperature-value">48°C</span>
+            </div>
+        </div>
+        <div class="base-timer" id="timer-container">
+            <!-- Timer SVG will be injected here -->
+        </div>
+        <button id="next-step-button" style="display: none;">Next Step ➡️</button>
+    </div>
+
+    <!-- Celebration Section -->
+    <div class="celebration" id="celebration">
+        <img src="https://img.icons8.com/emoji/96/000000/confetti-ball-emoji.png" alt="Celebration">
+        <h2>🎉 Dish is Ready! 🎉</h2>
+        <button id="back-to-selection-button">Back to Meal Selection</button>
+    </div>
+
+    <!-- Notification Area -->
+    <div class="notification" id="notification">Move to the next step!</div>
+
+    <!-- Audio Elements -->
+    <audio id="step-sound">
+        <source src="https://www.soundjay.com/buttons/sounds/button-3.mp3" type="audio/mpeg">
+    </audio>
+    <audio id="celebration-sound">
+        <source src="https://www.soundjay.com/misc/sounds/bell-ringing-05.mp3" type="audio/mpeg">
+    </audio>
+
+    <script>
+        // Replace with your ESP32's IP address
+        const ESP32_IP = 'http://192.168.1.100'; // Example IP. Replace with your ESP32's actual IP.
+
+        // Dish data with steps, temperatures, instructions, emojis, and images
+        const dishData = {
+            'Ugali': {
+                image: 'https://img.icons8.com/emoji/96/000000/bowl-with-spoon.png',
+                steps: [
+                    { emoji: '🔥', temp: 48, instruction: "Boil water until it reaches 48°C.", time: 300 }, // 5 minutes
+                    { emoji: '🌾', temp: 60, instruction: "Add maize flour and stir.", time: 180 }, // 3 minutes
+                    { emoji: '🍴', temp: 70, instruction: "Keep stirring until the Ugali thickens.", time: 240 } // 4 minutes
+                ]
+            },
+            'Jollof Rice': {
+                image: 'https://img.icons8.com/emoji/96/000000/fried-shrimp.png',
+                steps: [
+                    { emoji: '🧅', temp: 60, instruction: "Heat oil and fry onions until golden brown.", time: 300 }, // 5 minutes
+                    { emoji: '🍅', temp: 75, instruction: "Add tomatoes and cook until it reaches 75°C.", time: 180 }, // 3 minutes
+                    { emoji: '🍚', temp: 85, instruction: "Add rice, stir and cook until tender.", time: 240 } // 4 minutes
+                ]
+            },
+            'Injera': {
+                image: 'https://img.icons8.com/emoji/96/000000/bread.png',
+                steps: [
+                    { emoji: '🥣', temp: 40, instruction: "Ferment the batter at 40°C.", time: 300 }, // 5 minutes
+                    { emoji: '🍳', temp: 50, instruction: "Pour batter on a hot pan and cook.", time: 180 }, // 3 minutes
+                    { emoji: '✔️', temp: 60, instruction: "Remove Injera when it reaches 60°C.", time: 240 } // 4 minutes
+                ]
+            },
+            'Fufu': {
+                image: 'https://img.icons8.com/emoji/96/000000/stew.png',
+                steps: [
+                    { emoji: '🥄', temp: 50, instruction: "Boil cassava at 50°C.", time: 300 }, // 5 minutes
+                    { emoji: '💪', temp: 70, instruction: "Pound the boiled cassava until smooth.", time: 180 }, // 3 minutes
+                    { emoji: '🍽️', temp: 85, instruction: "Serve with soup when it reaches 85°C.", time: 240 } // 4 minutes
+                ]
+            },
+            'Sadza': {
+                image: 'https://img.icons8.com/emoji/96/000000/bowl-with-spoon.png',
+                steps: [
+                    { emoji: '💧', temp: 50, instruction: "Boil water at 50°C.", time: 300 }, // 5 minutes
+                    { emoji: '🌽', temp: 65, instruction: "Add maize meal and stir.", time: 180 }, // 3 minutes
+                    { emoji: '🥣', temp: 75, instruction: "Cook until the Sadza thickens.", time: 240 } // 4 minutes
+                ]
+            }
+        };
+
+        const FULL_DASH_ARRAY = 283;
+        let timePassed = 0;
+        let timeLeft = 0;
+        let timerInterval = null;
+        let currentStep = 0;
+        let selectedMeal = '';
+        let TIME_LIMIT = 0;
+
+        const mealSelectDiv = document.getElementById("meal-select");
+        const cookingStepsDiv = document.getElementById("cooking-steps");
+        const celebrationDiv = document.getElementById("celebration");
+        const nextStepButton = document.getElementById("next-step-button");
+        const stepInstruction = document.getElementById("step-instruction");
+        const temperatureValue = document.getElementById("temperature-value");
+        const mealTitle = document.getElementById("meal-title");
+        const mealImage = document.getElementById("meal-image");
+        const notificationDiv = document.getElementById("notification");
+        const backToSelectionButton = document.getElementById("back-to-selection-button");
+        const timerContainer = document.getElementById("timer-container");
+        const celebrationSound = document.getElementById("celebration-sound");
+        const stepSound = document.getElementById("step-sound");
+
+        // Initialize Timer SVG
+        function initializeTimer() {
+            timerContainer.innerHTML = `
+                <div class="base-timer">
+                    <svg class="base-timer__svg" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                        <g class="base-timer__circle">
+                            <circle class="base-timer__path-elapsed" cx="50" cy="50" r="45"></circle>
+                            <path
+                                id="base-timer-path-remaining"
+                                stroke-dasharray="283"
+                                class="base-timer__path-remaining green"
+                                d="
+                                M 50, 50
+                                m -45, 0
+                                a 45,45 0 1,0 90,0
+                                a 45,45 0 1,0 -90,0
+                                "
+                            ></path>
+                        </g>
+                    </svg>
+                    <span id="base-timer-label" class="base-timer__label">0:00</span>
+                </div>
+            `;
+        }
+
+        initializeTimer();
+
+        // Handle meal selection
+        document.getElementById("choose-meal-button").addEventListener('click', () => {
+            selectedMeal = document.getElementById("dish-select").value;
+            if (!dishData[selectedMeal]) {
+                alert("Please select a valid meal.");
+                return;
+            }
+            mealTitle.textContent = `🍽️ Steps to Cook ${selectedMeal}`;
+            mealImage.src = dishData[selectedMeal].image;
+            showStep(selectedMeal, currentStep);
+            mealSelectDiv.style.display = "none";
+            cookingStepsDiv.style.display = "block";
+        });
+
+        // Show cooking step details and start timer automatically
+        function showStep(meal, stepIndex) {
+            const stepData = dishData[meal].steps[stepIndex];
+            if (!stepData) {
+                showNotification("No step data available.", "error");
+                return;
+            }
+            stepInstruction.innerHTML = `<span class="emoji">${stepData.emoji}</span>${stepData.instruction}`;
+            fetchTemperatureData();
+            setStepColor(stepData.temp);
+            initializeTimer();
+            updateTimerLabel(0);
+            document.getElementById("base-timer-path-remaining").setAttribute("stroke-dasharray", FULL_DASH_ARRAY);
+            document.getElementById("base-timer-path-remaining").className = `base-timer__path-remaining ${getColorClass(stepData.temp)}`;
+            TIME_LIMIT = stepData.time;
+            timePassed = 0;
+            timeLeft = TIME_LIMIT;
+            updateTimerLabel(timeLeft);
+            stepSound.play();
+            startTimer();
+            nextStepButton.style.display = "block";
+        }
+
+        // Get color class based on temperature
+        function getColorClass(temp) {
+            if (temp < 60) {
+                return "green";
+            } else if (temp < 75) {
+                return "orange";
+            } else {
+                return "red";
+            }
+        }
+
+        // Set step color
+        function setStepColor(temp) {
+            const pathRemaining = document.getElementById("base-timer-path-remaining");
+            pathRemaining.className = `base-timer__path-remaining ${getColorClass(temp)}`;
+        }
+
+        // Next Step Button
+        nextStepButton.addEventListener('click', () => {
+            proceedToNextStep();
+        });
+
+        // Start Timer
+        function startTimer() {
+            timerInterval = setInterval(() => {
+                timePassed++;
+                timeLeft = TIME_LIMIT - timePassed;
+                updateTimerLabel(timeLeft);
+                setCircleDasharray();
+
+                if (timeLeft <= 0) {
+                    clearInterval(timerInterval);
+                    handleStepCompletion();
+                }
+            }, 1000);
+        }
+
+        // Update Timer Label
+        function updateTimerLabel(time) {
+            const minutes = Math.floor(time / 60);
+            const seconds = time % 60;
+            document.getElementById("base-timer-label").innerHTML = `${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
+        }
+
+        // Set Circle Dasharray
+        function setCircleDasharray() {
+            const circleDasharray = `${((timeLeft / TIME_LIMIT) * FULL_DASH_ARRAY).toFixed(0)} 283`;
+            document.getElementById("base-timer-path-remaining").setAttribute("stroke-dasharray", circleDasharray);
+        }
+
+        // Handle Step Completion
+        function handleStepCompletion() {
+            showNotification("Step completed!", "success");
+            proceedToNextStep();
+        }
+
+        // Proceed to Next Step
+        function proceedToNextStep() {
+            clearInterval(timerInterval);
+            currentStep++;
+            const totalSteps = dishData[selectedMeal].steps.length;
+            if (currentStep < totalSteps) {
+                showStep(selectedMeal, currentStep);
+                showNotification("Proceeding to the next step!", "success");
+            } else {
+                showCelebration();
+            }
+        }
+
+        // Show Notification
+        function showNotification(message, type = 'success') {
+            notificationDiv.textContent = message;
+            if (type === 'error') {
+                notificationDiv.style.backgroundColor = '#dc3545';
+            } else {
+                notificationDiv.style.backgroundColor = '#28a745';
+            }
+            notificationDiv.style.display = "block";
+            setTimeout(() => {
+                notificationDiv.style.display = "none";
+            }, 3000);
+        }
+
+        // Show Celebration
+        function showCelebration() {
+            cookingStepsDiv.style.display = "none";
+            celebrationDiv.style.display = "flex";
+            celebrationSound.play();
+        }
+
+        // Back to Meal Selection
+        backToSelectionButton.addEventListener('click', () => {
+            celebrationDiv.style.display = "none";
+            mealSelectDiv.style.display = "block";
+            currentStep = 0;
+            initializeTimer();
+        });
+
+        // Fetch temperature data from ESP32
+        async function fetchTemperatureData() {
+            try {
+                const response = await fetch(`${ESP32_IP}/temperature`);
+                const data = await response.json();
+                temperatureValue.textContent = `${data.temperature}°C`;
+                // Optionally, adjust TIME_LIMIT based on actual temperature
+                adjustTimerBasedOnTemperature(data.temperature);
+            } catch (error) {
+                console.error('Error fetching temperature data:', error);
+                temperatureValue.textContent = "N/A";
+            }
+        }
+
+        // Adjust Timer Based on Actual Temperature
+        function adjustTimerBasedOnTemperature(actualTemp) {
+            const stepTemp = dishData[selectedMeal].steps[currentStep].temp;
+            if (actualTemp >= stepTemp) {
+                // If actual temperature meets or exceeds the required, proceed to next step
+                clearInterval(timerInterval);
+                handleStepCompletion();
+            }
+            // Else, continue waiting until the temperature requirement is met
+        }
+
+        // Periodically fetch temperature data
+        setInterval(() => {
+            if (cookingStepsDiv.style.display === "block") {
+                fetchTemperatureData();
+            }
+        }, 5000); // Fetch every 5 seconds
+
+    </script>
+
+</body>
+
+</html>
